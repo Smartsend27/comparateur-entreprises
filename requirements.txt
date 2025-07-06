@@ -2,3 +2,10 @@ streamlit
 yfinance
 requests
 matplotlib
+tabulate
+pandas
+altair
+plotly
+yahooquery
+transformers
+torch
