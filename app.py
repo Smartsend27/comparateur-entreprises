@@ -28,6 +28,7 @@ def search_ticker(query):
     except Exception:
         return []
 # Liste des principaux indices boursiers mondiaux
+# carré
 MARKET_INDEXES = {
     "S&P 500 (USA)": "^GSPC",
     "NASDAQ (USA)": "^IXIC",
