@@ -14,6 +14,23 @@ import numpy as np
 from yahooquery import search
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+GA_ID = "G-PMJFLF7QNB"  # Remplace par ton propre ID
+
+ga_code = f"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+  gtag('config', '{GA_ID}');
+</script>
+"""
+
+# Injecte le code dans le head invisible de ta page
+st.components.v1.html(ga_code, height=0)
+if "last_tab" not in st.session_state:
+    st.session_state.last_tab = None
 if "last_tab" not in st.session_state:
     st.session_state.last_tab = None
 def search_ticker(query):
