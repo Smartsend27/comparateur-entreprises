@@ -14,9 +14,7 @@ import numpy as np
 from yahooquery import search
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
-from streamlit_analytics import track
 
-track()
 GA_ID = "G-PMJFLF7QNB"  # Remplace par ton propre ID
 
 ga_code = f"""
