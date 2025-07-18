@@ -9,3 +9,4 @@ plotly
 yahooquery
 transformers
 torch
+streamlit-analytics
