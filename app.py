@@ -14,6 +14,9 @@ import numpy as np
 from yahooquery import search
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+from streamlit_analytics import track
+
+track(unsafe_allow_html=True)
 GA_ID = "G-PMJFLF7QNB"  # Remplace par ton propre ID
 
 ga_code = f"""
@@ -31,8 +34,6 @@ ga_code = f"""
 st.components.v1.html(ga_code, height=0)
 if "last_tab" not in st.session_state:
     st.session_state.last_tab = None
-if "last_tab" not in st.session_state:
-    st.session_state.last_tab = None
 def search_ticker(query):
     """Recherche dynamique d'entreprise/ticker via Yahoo Finance."""
     try:
@@ -45,7 +46,6 @@ def search_ticker(query):
     except Exception:
         return []
 # Liste des principaux indices boursiers mondiaux
-# carré
 MARKET_INDEXES = {
     "S&P 500 (USA)": "^GSPC",
     "NASDAQ (USA)": "^IXIC",
