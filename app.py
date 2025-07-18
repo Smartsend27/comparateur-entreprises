@@ -16,7 +16,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import timedelta
 from streamlit_analytics import track
 
-track(unsafe_allow_html=True)
+track()
 GA_ID = "G-PMJFLF7QNB"  # Remplace par ton propre ID
 
 ga_code = f"""
