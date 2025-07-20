@@ -11,9 +11,29 @@ import streamlit.components.v1 as components
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
+import wikipedia
+import time
 from yahooquery import search
 from dateutil.relativedelta import relativedelta
 from datetime import timedelta
+st.markdown("""
+<head>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0a9396"/>
+  <link rel="apple-touch-icon" href="/static/icon-192.png"/>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/static/sw.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      })
+      .catch(function(error) {
+        console.log('ServiceWorker registration failed:', error);
+      });
+    }
+  </script>
+</head>
+""", unsafe_allow_html=True)
 
 GA_ID = "G-PMJFLF7QNB"  # Remplace par ton propre ID
 
@@ -393,6 +413,76 @@ def show_comparison_alerts(info, av_info, label):
     if not compare_field(info, av_info, "netIncomeToCommon", "NetIncomeTTM"):
         st.warning(f"⚠️ Divergence sur le bénéfice net de {label} entre Yahoo et Alpha Vantage : "
                    f"{info.get('netIncomeToCommon', 'N/A')} vs {av_info.get('NetIncomeTTM', 'N/A')}")
+        
+def get_random_financial_concept(max_retries=5):
+    """Obtient un concept financier aléatoire à partir de Wikipedia."""
+    wikipedia.set_lang("fr")  # Set language to French
+    for attempt in range(max_retries):
+        try:
+            # Get a random page from the "Finance" category
+            random_page = wikipedia.random(pages=1)
+            page = wikipedia.page(random_page)
+            categories = page.categories
+            if any('finance' in category.lower() or 'économie' in category.lower() for category in categories):
+                return page.title
+            
+        except wikipedia.exceptions.DisambiguationError as e:
+            random_page = random.choice(e.options)
+        except wikipedia.exceptions.PageError:
+            continue
+        except Exception as e:
+            if attempt == max_retries - 1:
+                return f"Erreur lors de la récupération du concept: {str(e)}"
+        
+        time.sleep(1)  # Add a small delay between attempts
+    
+    return "Concept financier non trouvé après plusieurs tentatives"
+
+def get_daily_financial_concept():
+    """Obtient le concept financier du jour en utilisant la date comme seed."""
+    today = datetime.date.today()
+    random.seed(int(today.strftime("%Y%m%d")))
+    return get_random_financial_concept()
+
+def explain_financial_concept(concept):
+    """Utilise l'IA pour expliquer le concept financier du jour."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return "Clé API Groq non trouvée. Veuillez configurer la clé API dans les paramètres."
+
+    prompt = f"""Tu es un expert en finance et en économie. Explique le concept suivant de manière claire et concise, 
+    adaptée à un public novice en finance. Inclus également un exemple concret pour illustrer le concept.
+
+    Concept du jour : {concept}
+
+    Explique en français, de façon pédagogique et accessible."""
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "llama3-70b-8192",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7,
+        "max_tokens": 1000
+    }
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload
+        )
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"]
+        else:
+            return f"Erreur Groq : {response.status_code} - {response.text}"
+    except Exception as e:
+        return f"Erreur : {e}"
+
+# ... (code existant pour la barre latérale)
 
 # Configuration de la page Streamlit
 st.set_page_config(page_title="Comparateur finance avancé", page_icon="📊", layout="wide")
@@ -420,7 +510,8 @@ with st.sidebar:
             "Le Cas du Jour",
             "Le marché du Jour",
             "Comparateur de marchés (2 marchés)",
-            "Dans le futur..."
+            "Dans le futur...",
+            "Éducation financière"
         ],
         key="selected_tab"
     )
@@ -2012,3 +2103,21 @@ Fournis une estimation de :
 
         # Avertissement
         st.warning("Note : Cette projection est basée sur des hypothèses simplifiées et ne constitue pas une prédiction fiable. Les marchés financiers sont imprévisibles et les performances passées ne garantissent pas les résultats futurs.")
+elif selected_tab == "Éducation financière":
+    st.header("📚 Éducation financière du jour")
+    
+    concept_of_the_day = get_daily_financial_concept()
+    st.subheader(f"Concept du jour : {concept_of_the_day}")
+    
+    explanation = explain_financial_concept(concept_of_the_day)
+    st.markdown(explanation)
+    
+    # Ajoutez un bouton pour permettre à l'utilisateur de poser des questions supplémentaires
+    user_question = st.text_input("Avez-vous une question sur ce concept ?")
+    if st.button("Poser la question"):
+        if user_question:
+            follow_up_explanation = explain_financial_concept(f"{concept_of_the_day}: {user_question}")
+            st.markdown("### Réponse à votre question:")
+            st.markdown(follow_up_explanation)
+        else:
+            st.warning("Veuillez entrer une question avant de cliquer sur le bouton.")
